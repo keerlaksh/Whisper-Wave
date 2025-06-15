@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Whisper Wave</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a2e;
+            color: #e2e2e2;
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            width: 100%;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header {
+            text-align: center;
+            background: rgba(30, 30, 46, 0.9);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            grid-column: 1 / -1;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #b8b5ff, #a5a1ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #d4d1ff;
+            font-weight: 300;
+        }
+
+        .form-container {
+            background: rgba(30, 30, 46, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #b8b5ff;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .form-group input[type="file"],
+        .form-group select,
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #3a3a5a;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #2a2a3a;
+            color: #e2e2e2;
+        }
+
+        .form-group input[type="file"] {
+            padding: 10px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #b8b5ff;
+            background: #2a2a3a;
+            box-shadow: 0 0 0 3px rgba(184, 181, 255, 0.2);
+        }
+
+        .submit-btn,
+        .stop-btn {
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .submit-btn {
+            background: linear-gradient(45deg, #938fff, #b8b5ff);
+            color: #1a1a2e;
+            border: none;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(184, 181, 255, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .stop-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            color: #1a1a2e;
+            border: none;
+            display: none;
+        }
+
+        .stop-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .stop-btn:active {
+            transform: translateY(0);
+        }
+
+        #complete-msg {
+            display: none;
+            text-align: center;
+            color: #a5ffd6;
+            font-weight: 600;
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(40, 60, 50, 0.5);
+        }
+
+        #loading {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 999;
+        }
+
+        .loading-spinner {
+            width: 30px;
+            height: 30px;
+            border: 4px solid #3a3a5a;
+            border-top: 4px solid #b8b5ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #audioResults {
+            background: rgba(30, 30, 46, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .episode-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(40, 40, 60, 0.7);
+            border-radius: 10px;
+            border-left: 3px solid #b8b5ff;
+        }
+
+        .episode-container p {
+            margin-bottom: 10px;
+            color: #d4d1ff;
+            font-weight: 500;
+        }
+
+        .episode-container audio {
+            width: 100%;
+            border-radius: 10px;
+            background: #2a2a3a;
+        }
+
+        .episode-container audio::-webkit-media-controls-panel {
+            background-color: #f1f1f1;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+        }
+
+        .speed-input {
+            position: relative;
+        }
+
+        .speed-input:after {
+            content: "x";
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7a7a9a;
+            font-weight: 600;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Spinner in corner -->
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>📄 PDF to Audio Episodes</h1>
+            <p>Upload a PDF and generate audio episodes</p>
+        </div>
+
+        <div class="left-panel">
+            <div class="form-container">
+                <form id="pdfForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="pdf">📎 Upload PDF:</label>
+                        <input type="file" name="pdf" id="pdf" accept=".pdf" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="voice">🎭 Select Voice:</label>
+                        <select name="voice" id="voice">
+                            {% for voice in voices %}
+                            <option value="{{ voice }}">{{ voice }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="model">🤖 Select Model:</label>
+                        <select name="model" id="model">
+                            {% for model in models %}
+                            <option value="{{ model }}">{{ model }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="speed">⚡ Speed (0.5 - 2.0):</label>
+                        <div class="speed-input">
+                            <input type="number" name="speed" id="speed" step="0.1" min="0.5" max="2.0" value="1.0"
+                                required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn">🎵 Convert to Audio</button>
+                </form>
+
+                <button id="stopBtn" class="stop-btn">⏹️ Stop Generation</button>
+                <div id="complete-msg">✅ Audio generation completed!</div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div id="audioResults">
+                <p style="text-align: center; color: #7a7a9a; padding: 20px;">Your generated audio episodes will appear
+                    here</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById("pdfForm");
+        const loadingSpinner = document.getElementById("loading");
+        const audioResults = document.getElementById("audioResults");
+        const completeMessage = document.getElementById("complete-msg");
+        const stopBtn = document.getElementById("stopBtn");
+
+        let stopRequested = false;
+
+        stopBtn.addEventListener("click", () => {
+            stopRequested = true;
+            stopBtn.disabled = true;
+            stopBtn.textContent = "⏳ Stopping...";
+        });
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            stopRequested = false;
+            stopBtn.disabled = false;
+            stopBtn.textContent = "⏹️ Stop Generation";
+
+            loadingSpinner.style.display = "flex";
+            completeMessage.style.display = "none";
+            stopBtn.style.display = "block";
+            audioResults.innerHTML = '<div class="episode-container"><p>Generating episodes...</p></div>';
+
+            const formData = new FormData(form);
+            const response = await fetch("/upload_pdf", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await response.json();
+            if (data.error) {
+                alert("Error: " + data.error);
+                loadingSpinner.style.display = "none";
+                stopBtn.style.display = "none";
+                audioResults.innerHTML = '<p style="text-align: center; color: #ff6b6b;">Error: ' + data.error + '</p>';
+                return;
+            }
+
+            const chunks = data.chunks;
+            const voice = form.voice.value;
+            const model = form.model.value;
+            const speed = parseFloat(form.speed.value);
+
+            audioResults.innerHTML = "";
+
+            for (let i = 0; i < chunks.length; i++) {
+                if (stopRequested) break;
+
+                const chunk = chunks[i];
+                const res = await fetch("/generate_chunk", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        text: chunk,
+                        voice,
+                        model,
+                        speed,
+                        index: i
+                    })
+                });
+
+                const result = await res.json();
+                const episodeDiv = document.createElement("div");
+                episodeDiv.className = "episode-container";
+                episodeDiv.innerHTML = `
+                    <p><strong>Episode ${result.index + 1}:</strong></p>
+                    <audio controls>
+                        <source src="/audio/${result.filename}" type="audio/wav">
+                        Your browser does not support the audio element.
+                    </audio>
+                `;
+                audioResults.appendChild(episodeDiv);
+                episodeDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            loadingSpinner.style.display = "none";
+            stopBtn.style.display = "none";
+
+            completeMessage.textContent = stopRequested
+                ? "⏹️ Audio generation stopped by user."
+                : "✅ Audio generation completed!";
+            completeMessage.style.display = "block";
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whisper Wave</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #1a1a2e;
+    min-height: 100vh;
+    color: #e2e2e2;
+    line-height: 1.6;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+}
+
+
+.container {
+    width: 100%;
+    max-width: 1300px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header {
+            text-align: center;
+            background: rgba(30, 30, 46, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            grid-column: 1 / -1;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #b8b5ff, #a5a1ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #d4d1ff;
+            font-weight: 300;
+        }
+
+        .error-messages {
+            background: rgba(40, 40, 60, 0.95);
+            border-left: 4px solid #ff6b6b;
+            border-radius: 8px;
+            padding: 15px 20px;
+            box-shadow: 0 4px 16px rgba(255, 107, 107, 0.1);
+            color: #ffb3b3;
+        }
+
+        .error-messages ul {
+            list-style: none;
+        }
+
+        .error-messages li {
+            color: #ffb3b3;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .error-messages li:before {
+            content: "⚠ ";
+            margin-right: 8px;
+        }
+
+        .form-container {
+            background: rgba(30, 30, 46, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #b8b5ff;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .form-group textarea,
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #3a3a5a;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #2a2a3a;
+            color: #e2e2e2;
+        }
+
+        .form-group textarea:focus,
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #b8b5ff;
+            background: #2a2a3a;
+            box-shadow: 0 0 0 3px rgba(184, 181, 255, 0.2);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 150px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .submit-btn {
+            background: linear-gradient(45deg, #938fff, #b8b5ff);
+            color: #1a1a2e;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(184, 181, 255, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .audio-output {
+            background: rgba(30, 30, 46, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .audio-output h3 {
+            color: #b8b5ff;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .audio-output audio {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 23.5px;
+            background: #3a3a5a;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .audio-output audio::-webkit-media-controls-panel {
+            background-color: #f1f1f1;
+        }
+
+        .speed-input {
+            position: relative;
+        }
+
+        .speed-input:after {
+            content: "x";
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7a7a9a;
+            font-weight: 600;
+            pointer-events: none;
+        }
+
+        @media (max-width: 1024px) {
+            body {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .left-panel,
+            .right-panel {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.2rem;
+            }
+
+            .form-container {
+                padding: 20px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+        }
+
+        .icon {
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #3a3a5a;
+            border-top: 4px solid #b8b5ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #complete-msg {
+            display: none;
+            text-align: center;
+            color: #a5ffd6;
+            font-weight: 600;
+            margin-top: 20px;
+            font-size: 1.2rem;
+        }
+
+        .form-group label input[type="checkbox"] {
+            margin-right: 10px;
+            accent-color: #b8b5ff;
+        }
+
+        .episode-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(40, 40, 60, 0.7);
+            border-radius: 10px;
+            border-left: 3px solid #b8b5ff;
+        }
+
+        .episode-container p {
+            margin-bottom: 10px;
+            color: #d4d1ff;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Spinner in corner -->
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Completion message -->
+    
+
+    <div class="container">
+        <div class="header">
+            <h1>🎙️ Professional Text-to-Speech Generation</h1>
+            
+        </div>
+
+        <div class="left-panel">
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="error-messages">
+                <ul>
+                    {% for message in messages %}
+                    <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <div class="form-container">
+                <form id="ttsForm" onsubmit="return handleFormSubmit(event)">
+                    <div class="form-group">
+                        <label for="text"><span class="icon">📝</span>Text to Convert:</label>
+                        <textarea name="text" id="text" placeholder="Paste your story or text here..."
+                            required></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="voice"><span class="icon">🎭</span>Voice:</label>
+                            <select name="voice" id="voice" required>
+                                {% for v in voices %}
+                                <option value="{{ v }}">{{ v }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="model"><span class="icon">🤖</span>Model:</label>
+                            <select name="model" id="model" required>
+                                {% for m in models %}
+                                <option value="{{ m }}">{{ m }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="speed"><span class="icon">⚡</span>Speed (0.5 - 2.0):</label>
+                        <div class="speed-input">
+                            <input type="number" step="0.1" name="speed" id="speed" value="1.0" min="0.5" max="2.0"
+                                required />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="autoplayToggle"> Autoplay each episode
+                        </label>
+                    </div>
+
+                    <button type="submit" class="submit-btn">
+                        <span class="icon">🎵</span>Generate Audio
+                    </button>
+                  
+                </form>
+                <div id="complete-msg">✅ Audio generation completed!</div>
+            </div>
+           
+        </div>
+
+        <div class="right-panel">
+            {% if audio_files %}
+            <div class="audio-output">
+                <h3><span class="icon">🔊</span>Generated Episodes</h3>
+                {% for file in audio_files %}
+                <div class="episode-container">
+                    <p><strong>Episode {{ loop.index }}:</strong></p>
+                    <audio controls>
+                        <source src="{{ url_for('audio_file', filename=file) }}" type="audio/wav">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="audio-output">
+                <h3><span class="icon">🔊</span>Generated Episodes</h3>
+                <p style="text-align: center; color: #7a7a9a;">Your generated episodes will appear here</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        {% if audio_files %}
+        document.addEventListener('DOMContentLoaded', function () {
+            const audioOutput = document.querySelector('.audio-output');
+            if (audioOutput) {
+                audioOutput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+        {% endif %}
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+
+            const loadingSpinner = document.getElementById("loading");
+            const completeMessage = document.getElementById("complete-msg");
+            const autoplayEnabled = document.getElementById("autoplayToggle").checked;
+
+            loadingSpinner.style.display = "flex";
+            completeMessage.style.display = "none";
+
+            const text = document.getElementById("text").value;
+            const voice = document.getElementById("voice").value;
+            const model = document.getElementById("model").value;
+            const speed = parseFloat(document.getElementById("speed").value);
+            const outputContainer = document.querySelector(".audio-output") || createAudioContainer();
+
+            const chunks = text.match(/(.|\s){1,400}(?=\s|$)/g);
+            outputContainer.innerHTML = '<h3><span class="icon">🔊</span>Generated Episodes</h3>';
+
+            for (let i = 0; i < chunks.length; i++) {
+                const response = await fetch("/generate_chunk", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        text: chunks[i],
+                        voice: voice,
+                        model: model,
+                        speed: speed,
+                        index: i
+                    })
+                });
+
+                const data = await response.json();
+                const episodeDiv = document.createElement("div");
+                episodeDiv.className = "episode-container";
+                episodeDiv.innerHTML = `
+                    <p><strong>Episode ${data.index + 1}:</strong></p>
+                    <audio controls ${autoplayEnabled ? "autoplay" : ""}>
+                        <source src="/audio/${data.filename}" type="audio/wav">
+                        Your browser does not support the audio element.
+                    </audio>
+                `;
+                outputContainer.appendChild(episodeDiv);
+                episodeDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            loadingSpinner.style.display = "none";
+            completeMessage.style.display = "block";
+        }
+
+        function createAudioContainer() {
+            const container = document.createElement("div");
+            container.classList.add("audio-output");
+            const heading = document.createElement("h3");
+            heading.innerHTML = "<span class='icon'>🔊</span>Generated Episodes";
+            container.appendChild(heading);
+            document.querySelector(".right-panel").appendChild(container);
+            return container;
+        }
+    </script>
+</body>
+
+</html>
